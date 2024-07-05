@@ -1,0 +1,39 @@
+---
+title: "Data-Loading"
+output: html_document
+date: "2024-07-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+library(Seurat)
+library(ggplot2)
+library(Matrix)
+library(openxlsx)
+library(dplyr)
+
+```{r r set_pathway, include=FALSE}
+```
+
+# set the pathway
+barcodes_path <- "/Users/yutongli/Desktop/Data for R/filtered_feature_bc_matrix/barcodes.tsv.gz"
+features_path <- "/Users/yutongli/Desktop/Data for R/filtered_feature_bc_matrix/features.tsv.gz"
+matrix_path <- "/Users/yutongli/Desktop/Data for R/filtered_feature_bc_matrix/matrix.mtx.gz"
+
+
+```{r read_file, echo=FALSE}
+```
+
+# read barcode file
+barcodes <- read.table(barcodes_path, header = FALSE, stringsAsFactors = FALSE)
+colnames(barcodes) <- "barcode"
+
+# read feature file
+features <- read.table(features_path, header = FALSE, stringsAsFactors = FALSE)
+colnames(features) <- c("gene_id", "gene_name", "type")
+
+# read matrix file
+matrix <- readMM(matrix_path)
+
+```

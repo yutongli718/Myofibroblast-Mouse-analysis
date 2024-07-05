@@ -1,0 +1,49 @@
+---
+title: "Data-Preprocessing and clustering"
+output: html_document
+date: "2024-07-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Normalization and Scaling
+```{r initial_Seurat, echo=FALSE}
+
+## Normalize the data
+seurat_object <- NormalizeData(seurat_object, normalization.method = "LogNormalize", scale.factor = 10000)
+
+## Identify variable features
+seurat_object <- FindVariableFeatures(seurat_object, selection.method = "vst", nfeatures = 2000)
+
+## Scale the data
+seurat_object <- ScaleData(seurat_object)
+```
+#Dimension reduction - PCA
+```{r initial_PCA, echo=FALSE}
+
+## Run PCA
+seurat_object <- RunPCA(seurat_object, features = VariableFeatures(object = seurat_object))
+```
+#Graph-based clustering
+```{r initial_cluster, echo=FALSE}
+
+## Find neighbors and clusters
+seurat_object <- FindNeighbors(seurat_object, dims = 1:10)
+seurat_object <- FindClusters(seurat_object, resolution = 0.35) 
+```
+
+```{r initial_TSNE}
+
+## Run t-SNE
+seurat_object <- RunTSNE(seurat_object, dims = 1:10, seed.use = 42)
+
+## Plot t-SNE
+DimPlot(seurat_object, reduction = "tsne", label=TRUE)
+```
+
+
+
+
+

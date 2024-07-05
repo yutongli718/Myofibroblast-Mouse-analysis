@@ -1,0 +1,93 @@
+---
+title: "Visualization-and-Marker-Identification"
+output: html_document
+date: "2024-07-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Find markers and output
+```{r initial_findmarkers, include=FALSE, cache=FALSE}
+
+##Find all markers
+cluster_markers <- FindAllMarkers(seurat_object, only.pos = TRUE, min.pct = 0.25, thresh.use = 0.25)
+
+## Find markers for a spcific cluster
+cluster_0_object <- subset(seurat_object, idents = 0)
+
+### find all markers of cluster 0
+cluster0.markers <- FindMarkers(seurat_object, ident.1 = 0, ident.2 = c(1, 2, 3))
+
+####same process for cluster 1,2,3,4,5
+####Cluster 0 vs.Cluster 123
+cluster0.markers <- FindMarkers(seurat_object, ident.1 = 0, ident.2 = c(1, 2, 3))
+###Cluster 1 vs.Cluster 023
+cluster1.markers <- FindMarkers(seurat_object, ident.1 = 1, ident.2 = c(0, 2, 3))
+###Cluster 2 vs.Cluster 013
+cluster2.markers <- FindMarkers(seurat_object, ident.1 = 2, ident.2 = c(0, 1, 3))
+###Cluster 3 vs.Cluster 012
+cluster3.markers <- FindMarkers(seurat_object, ident.1 = 3, ident.2 = c(0, 1, 2))
+
+cluster4vs5.markers <- FindMarkers(seurat_object, ident.1 = 4, ident.2 = 5)
+
+cluster0vs1.markers <- FindMarkers(seurat_object, ident.1 = 0, ident.2 = 1)
+cluster0vs2.markers <- FindMarkers(seurat_object, ident.1 = 0, ident.2 = 2)
+cluster0vs3.markers <- FindMarkers(seurat_object, ident.1 = 0, ident.2 = 3)
+cluster1vs2.markers <- FindMarkers(seurat_object, ident.1 = 1, ident.2 = 2)
+cluster1vs3.markers <- FindMarkers(seurat_object, ident.1 = 1, ident.2 = 3)
+cluster2vs3.markers <- FindMarkers(seurat_object, ident.1 = 2, ident.2 = 3)
+
+## Output the xlsx file
+write.xlsx(cluster_markers, file = "/Users/yutongli/Desktop/cluster_markers_13_communities.xlsx")
+
+```
+# visualization and gene overlay
+```{r plot, include=FALSE}
+# Define the features to check
+features <- c("Cdh1", "Epcam", "Ptprc", "Ms4a1", "Cd19", "Mzb1", "Ccr10", "Sdc1", 
+              "Cd3e", "Cd4", "Cd8a", "Cd8b1", "Ccr6", "Nkg7", "Ncam1", "Cd68", "Cd14",
+              "Itgax", "Kit", "Il1rl1", "Foxp3", "Pecam1", "Lyve1", "Plp1", "S100b", 
+              "Rgs5", "Steap4", "Pdgfrb", "Myh11", "Actg2", "Myocd", "Des", 
+              "Acta2", "Pdgfra", "Sparc", "Dcn", "Lum", "Col1a1", "Ccl8", "Fgfr2", 
+              "Col3a1", "Cxcl13", "Ccl19", "Col4a5", "Col4a6", "Vcam1", "Ogn", 
+              "Mgp", "Sfrp2", "C3", "Dpt", "Cpm", "Fn1", "Sox6")
+
+# Define the output directory
+output_dir <- "/Users/yutongli/Desktop/mouse gene overlay"
+
+# Ensure the output directory exists
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+# Check which features exist in the Seurat object
+existing_features <- intersect(features, rownames(seurat_object))
+
+# Print missing features
+missing_features <- setdiff(features, existing_features)
+if (length(missing_features) > 0) {
+  cat("The following requested variables were not found:\n")
+  print(missing_features)
+}
+
+# Generate and save plots only for existing features
+for (feature in existing_features) {
+  plot <- FeaturePlot(seurat_object, features = feature, pt.size = 0.3, reduction = "tsne") +
+    scale_colour_gradientn(colours = c("blue", "green", "yellow", "red")) +
+    ggtitle(feature)
+  
+  # Add cluster labels
+  plot <- LabelClusters(plot = plot, id = "ident", size = 5) # Adjust 'size' as needed
+  
+  # Define the output file path
+  file_path <- file.path(output_dir, paste0(feature, "_FeaturePlot.png"))
+  
+  # Save the plot
+  ggsave(filename = file_path, plot = plot, width = 10, height = 8, dpi = 300)
+}
+
+```
+
+

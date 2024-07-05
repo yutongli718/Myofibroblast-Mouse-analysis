@@ -1,0 +1,156 @@
+---
+title: "Data-Preprocessing and checking"
+output: html_document
+date: "2024-07-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Matrix and seurat object creation
+```{r matrix, include=FALSE, cache=FALSE}
+
+## check duplicated genes
+duplicated_genes <- features$gene_name[duplicated(features$gene_name)]
+print(duplicated_genes)
+
+## obtain unique gene names
+unique_gene_names <- make.unique(features$gene_name)
+
+rownames(matrix) <- unique_gene_names
+colnames(matrix) <- barcodes$barcode
+
+seurat_object <- CreateSeuratObject(counts = matrix)
+```
+# Quality Control and visualization
+```{r initial_QC}
+
+## Calculate percent mitochondrial genes
+seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^mt-")
+
+## Quality control
+seurat_object <- subset(seurat_object, subset = nFeature_RNA > 200 & nFeature_RNA < 7500 & percent.mt < 7)
+
+### Visualization for QC step
+VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), 
+        group.by = "orig.ident")
+plot1 <- FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "percent.mt", group.by = "orig.ident")
+plot2 <- FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA", group.by = "orig.ident")
+plot1 + plot2
+
+#### Create Feature Plots for nFeature_RNA, nCount_RNA, and percent.mt
+FeaturePlot(seurat_object, features = "nFeature_RNA", reduction = "tsne") +
+  ggtitle("nFeature_RNA")+
+  scale_colour_gradientn(colours = c("blue", "green", "yellow", "red"))
+FeaturePlot(seurat_object, features = "nCount_RNA", reduction = "tsne") +
+  ggtitle("nCount_RNA")+
+  scale_colour_gradientn(colours = c("blue", "green", "yellow", "red"))
+FeaturePlot(seurat_object, features = "percent.mt", reduction = "tsne") +
+  ggtitle("percent.mt")+
+  scale_colour_gradientn(colours = c("blue", "green", "yellow", "red"))
+
+FeaturePlot(seurat_object, features = "Mki67", reduction = "tsne") 
+```
+# Scatter plot for EGFP/Pdgfra vs.DsRed/Acta2
+```{r initial_scatterplot, include=FALSE, cache=FALSE}
+
+## EGFP vs. DsRed
+### Extract expression data for Pdgfra and DsRed along with cluster information
+expression_data <- FetchData(seurat_object, vars = c("C-GFP", "DsRed", "ident"))
+
+### Convert the cluster information to a factor
+expression_data$Cluster <- as.factor(expression_data$ident)
+
+### Define the output directory
+output_dir <- "/Users/yutongli/Desktop/Scatter plot"
+
+### Ensure the output directory exists
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+### Create and save scatter plots for each cluster
+for (cluster in unique(expression_data$Cluster)) {
+  cluster_data <- expression_data[expression_data$Cluster == cluster, ]
+  
+  plot <- ggplot(cluster_data, aes(x = `DsRed`, y = `C-GFP`)) +
+    geom_point(alpha = 0.5) +
+    labs(x = "DsRed Expression", y = "C-GFP Expression", 
+         title = paste("Scatter Plot of DsRed vs C-GFP - Cluster", cluster)) +
+    theme_minimal()
+  
+  ### Define the output file path
+  file_path <- file.path(output_dir, paste0("Cluster_", cluster, "_ScatterPlot.png"))
+  
+  ### Save the plot
+  ggsave(filename = file_path, plot = plot, width = 10, height = 8, dpi = 300)
+}
+
+## EGFP vs. Pdgfra
+### Extract expression data for Pdgfra and DsRed along with cluster information
+expression_data <- FetchData(seurat_object, vars = c("C-GFP", "Pdgfra", "ident"))
+
+### Convert the cluster information to a factor
+expression_data$Cluster <- as.factor(expression_data$ident)
+
+### Define the output directory
+output_dir <- "/Users/yutongli/Desktop/Scatter plot"
+
+### Ensure the output directory exists
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+### Create and save scatter plots for each cluster
+for (cluster in unique(expression_data$Cluster)) {
+  cluster_data <- expression_data[expression_data$Cluster == cluster, ]
+  
+  plot <- ggplot(cluster_data, aes(x = `Pdgfra`, y = `C-GFP`)) +
+    geom_point(alpha = 0.5) +
+    labs(x = "Pdgfra Expression", y = "C-GFP Expression", 
+         title = paste("Scatter Plot of Pdgfra vs C-GFP - Cluster", cluster)) +
+    theme_minimal()
+  
+  ### Define the output file path
+  file_path <- file.path(output_dir, paste0("Cluster_", cluster, "_ScatterPlot.png"))
+  
+  ### Save the plot
+  ggsave(filename = file_path, plot = plot, width = 10, height = 8, dpi = 300)
+}
+
+## DsRed vs. Acta2
+### Extract expression data for Pdgfra and DsRed along with cluster information
+expression_data <- FetchData(seurat_object, vars = c("Acta2", "DsRed", "ident"))
+
+### Convert the cluster information to a factor
+expression_data$Cluster <- as.factor(expression_data$ident)
+
+### Define the output directory
+output_dir <- "/Users/yutongli/Desktop/Scatter plot"
+
+### Ensure the output directory exists
+if (!dir.exists(output_dir)) {
+  dir.create(output_dir, recursive = TRUE)
+}
+
+### Create and save scatter plots for each cluster
+for (cluster in unique(expression_data$Cluster)) {
+  cluster_data <- expression_data[expression_data$Cluster == cluster, ]
+  
+  plot <- ggplot(cluster_data, aes(x = `DsRed`, y = `Acta2`)) +
+    geom_point(alpha = 0.5) +
+    labs(x = "DsRed Expression", y = "Acta2 Expression", 
+         title = paste("Scatter Plot of DsRed vs Acta2 - Cluster", cluster)) +
+    theme_minimal()
+  
+  ### Define the output file path
+  file_path <- file.path(output_dir, paste0("Cluster_", cluster, "_ScatterPlot.png"))
+  
+  ### Save the plot
+  ggsave(filename = file_path, plot = plot, width = 10, height = 8, dpi = 300)
+}
+
+```
+
+
+
